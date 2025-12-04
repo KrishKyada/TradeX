@@ -1,0 +1,91 @@
+/* BASIC LAYOUT */
+.layout {
+  display:flex;
+  height: 97.5vh;
+  width: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+/* LEFT SIDEBAR */
+.sidebar {
+  width: 230px;
+  background: linear-gradient(180deg, #6a11cb, #2575fc);
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 25px 15px;
+  border-radius: 0 20px 20px 0;
+  height: 650px;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 40px;
+}
+
+.menu {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.menu-item {
+  padding: 12px;
+  border-radius: 10px;
+  transition: 0.2s ease;
+  text-decoration: none;
+  color: white;
+  font-size: 16px;
+}
+
+.menu-item:hover,
+.menu-item.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* LOGOUT */
+.logout-btn {
+  margin-top: auto;
+  padding: 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.15);
+  text-align: center;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* RIGHT CONTENT AREA */
+.content {
+  flex: 1;
+  background: #f5f7fb;
+  padding: 20px 30px;
+  overflow-y: hidden;
+  border-radius: 20px 0 0 20px;
+}
+
+/* HEADER */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom:-40px;
+  margin-top: -35px;
+}
+
+.search-box input {
+  width: 300px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  outline: none;
+}
+
+.profile-pic {
+  width: 40px;
+  border-radius: 50%;
+}
+
+.page-content {
+  margin-top: 20px;
+}
