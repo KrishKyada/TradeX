@@ -4,17 +4,32 @@ import axios from "axios";
 const router = express.Router();
 
 // GET Crypto Price
-router.get("/crypto/:symbol", async (req, res) => {
+// GET Crypto Prices (Batch)
+router.post("/crypto/batch", async (req, res) => {
   try {
-    const symbol = req.params.symbol.toLowerCase();
+    const symbols = req.body.symbols; // ["BTC", "ETH", "SOL"]
 
-    const response = await axios.get(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=usd`
-    );
+    // Binance symbol mapping: BTC -> BTCUSDT
+    const prices = {};
 
-    res.json({ price: response.data[symbol].usd });
+    for (const sym of symbols) {
+      const pair = sym + "USDT"; // BTC -> BTCUSDT
+
+      const url = `https://api.binance.com/api/v3/ticker/price?symbol=${pair}`;
+
+      try {
+        const response = await axios.get(url);
+        prices[sym] = parseFloat(response.data.price);
+      } catch (err) {
+        prices[sym] = 0; // fallback if symbol not found
+      }
+    }
+
+    res.json(prices);
+
   } catch (error) {
-    res.status(500).json({ error: "Failed to fetch crypto price" });
+    console.error("BINANCE BATCH ERROR:", error.message);
+    res.status(500).json({ error: "Failed to fetch Binance crypto prices" });
   }
 });
 

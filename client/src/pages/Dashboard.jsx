@@ -21,22 +21,45 @@ function Dashboard() {
   }
 
   const fetchLivePrices = async () => {
-    const prices = {}
-    for (const asset of assets) {
-      const url =
-        asset.type === "crypto"
-          ? `http://localhost:5000/api/prices/crypto/${asset.symbol}`
-          : `http://localhost:5000/api/prices/stock/${asset.symbol}`
+    const prices = {};
+
+    // Separate crypto and stock assets
+    const cryptoAssets = assets.filter((a) => a.type === "crypto");
+    const stockAssets = assets.filter((a) => a.type === "stock");
+
+    /* -----------------------------
+          1️⃣ Fetch crypto prices (batch)
+    ------------------------------ */
+    if (cryptoAssets.length > 0) {
+      const symbols = cryptoAssets.map((a) => a.symbol);
 
       try {
-        const res = await axios.get(url)
-        prices[asset.symbol] = res.data.price
-      } catch {
-        prices[asset.symbol] = 0
+        const res = await axios.post(
+          "http://localhost:5000/api/prices/crypto/batch",
+          { symbols }
+        );
+        Object.assign(prices, res.data); // { BTC: 42000, ETH: 3000 }
+      } catch (err) {
+        cryptoAssets.forEach((a) => (prices[a.symbol] = 0));
       }
     }
-    setLivePrices(prices)
-  }
+
+    /* -----------------------------
+          2️⃣ Fetch stock prices (one-by-one)
+    ------------------------------ */
+    for (const asset of stockAssets) {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/prices/stock/${asset.symbol}`
+        );
+        prices[asset.symbol] = res.data.price || 0;
+      } catch {
+        prices[asset.symbol] = 0;
+      }
+    }
+
+    setLivePrices(prices);
+  };
 
   const fetchChart = async () => {
     try {
@@ -137,7 +160,7 @@ function Dashboard() {
         {/* ROW 2 - BITCOIN CHART (LEFT) and TRENDING ASSETS (RIGHT) */}
         <div
           style={{
-            gridColumn: "1 / 4",
+            gridColumn: "1 / 5",
             gridRow: "2 / 3",
             display: "flex",
             flexDirection: "column",
@@ -151,7 +174,7 @@ function Dashboard() {
 
         <div
           style={{
-            gridColumn: "4 / 7",
+            gridColumn: "5 / 7",
             gridRow: "2 / 3",
             overflow: "hidden",
             height: "100%",
@@ -163,7 +186,7 @@ function Dashboard() {
         {/* ROW 3 - MARKET OVERVIEW (LEFT) and ADVANCED ANALYTICS (RIGHT) */}
         <div
           style={{
-            gridColumn: "1 / 3",
+            gridColumn: "1 / 4",
             gridRow: "3 / 4",
             overflow: "hidden",
             height: "100%",
@@ -174,7 +197,7 @@ function Dashboard() {
 
         <div
           style={{
-            gridColumn: "3 / 7",
+            gridColumn: "4 / 7",
             gridRow: "3 / 4",
             overflow: "hidden",
             height: "100%",

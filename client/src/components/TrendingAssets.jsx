@@ -1,8 +1,38 @@
+import { useEffect, useState } from "react";
+import axios from "axios";
+
 function TrendingAssets() {
-  const trending = [
-    { symbol: "BTC", name: "Bitcoin", price: 42150, change: 5.2, volume: "28.5B" },
-    { symbol: "ETH", name: "Ethereum", price: 2240, change: 3.8, volume: "12.3B" },
-  ]
+  const [trending, setTrending] = useState([]);
+
+  const fetchTrending = async () => {
+    try {
+      // Binance 24hr ticker returns all crypto trading pairs
+      const url = "https://api.binance.com/api/v3/ticker/24hr";
+      const { data } = await axios.get(url);
+
+      // Filter only USDT pairs (most popular)
+      const usdtPairs = data.filter((item) => item.symbol.endsWith("USDT"));
+
+      // Convert into readable data structure
+      const formatted = usdtPairs
+        .map((item) => ({
+          symbol: item.symbol.replace("USDT", ""), // BTCUSDT => BTC
+          price: parseFloat(item.lastPrice),
+          change: parseFloat(item.priceChangePercent),
+          volume: (parseFloat(item.quoteVolume) / 1_000_000_000).toFixed(2) + "B",
+        }))
+        .sort((a, b) => b.volume - a.volume) // Sort by highest volume
+        .slice(0, 5); // Take top 5 trending
+
+      setTrending(formatted);
+    } catch (error) {
+      console.error("Trending fetch error:", error.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrending();
+  }, []);
 
   return (
     <div
@@ -29,11 +59,26 @@ function TrendingAssets() {
         }
       `}</style>
 
-      <h3 style={{ marginTop: "0", marginBottom: "15px", color: "#00d4ff", fontSize: "18px", fontWeight: "600" }}>
-        🔥 Trending Now
+      <h3
+        style={{
+          marginTop: "0",
+          marginBottom: "15px",
+          color: "#00d4ff",
+          fontSize: "18px",
+          fontWeight: "600",
+        }}
+      >
+        🔥 Trending Now (Live)
       </h3>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: "12px", flex: 1 }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "12px",
+          flex: 1,
+        }}
+      >
         {trending.map((asset) => (
           <div
             key={asset.symbol}
@@ -49,11 +94,22 @@ function TrendingAssets() {
             }}
           >
             <div>
-              <p style={{ margin: "0", color: "#fff", fontWeight: "600", fontSize: "14px" }}>{asset.symbol}</p>
-              <p style={{ margin: "4px 0 0 0", color: "#aaa", fontSize: "12px" }}>{asset.name}</p>
+              <p style={{ margin: "0", color: "#fff", fontWeight: "600", fontSize: "14px" }}>
+                {asset.symbol}
+              </p>
+              <p style={{ margin: "4px 0 0 0", color: "#aaa", fontSize: "12px" }}>
+                {asset.volume} Volume
+              </p>
             </div>
             <div style={{ textAlign: "right" }}>
-              <p style={{ margin: "0", color: "#00d4ff", fontWeight: "600", fontSize: "14px" }}>
+              <p
+                style={{
+                  margin: "0",
+                  color: "#00d4ff",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                }}
+              >
                 ${asset.price.toLocaleString()}
               </p>
               <p
@@ -72,7 +128,7 @@ function TrendingAssets() {
         ))}
       </div>
     </div>
-  )
+  );
 }
 
-export default TrendingAssets
+export default TrendingAssets;

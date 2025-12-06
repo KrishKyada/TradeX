@@ -15,7 +15,7 @@ function MainLayout({ children }) {
           <Link to="/dashboard" className="menu-item active">
             📊 Dashboard
           </Link>
-          <Link to="#" className="menu-item">
+          <Link to="/analytics" className="menu-item">
             📈 Analytics
           </Link>
           <Link to="#" className="menu-item">

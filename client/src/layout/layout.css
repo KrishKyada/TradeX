@@ -14,7 +14,6 @@ body {
 .layout {
   display: flex;
   height: 100vh;
-  overflow: hidden;
   background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
 }
 
@@ -121,7 +120,8 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow-y: auto;   /* ENABLE PAGE SCROLL */
+  overflow-x: hidden;
   background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
 }
 
@@ -193,7 +193,7 @@ body {
 }
 
 /* REMOVE ALL SCROLLBARS */
-* {
+/* * {
   scrollbar-width: none;
 }
 
@@ -210,6 +210,10 @@ body {
 html::-webkit-scrollbar,
 body::-webkit-scrollbar {
   display: none;
+} */
+
+html, body {
+  overflow-y: auto;
 }
 
 /* ENABLE SCROLL ONLY IN PORTFOLIO TABLE */
@@ -232,4 +236,24 @@ body::-webkit-scrollbar {
 
 .portfolio-scroll-inner::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.08);
+}
+
+/* Smooth horizontal scrollbar for market overview */
+.market-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.market-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 212, 255, 0.35); /* cyan glow */
+  border-radius: 20px;
+  border: 2px solid rgba(10, 15, 40, 0.9); /* blends with dark bg */
+}
+
+.market-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 212, 255, 0.6);
+}
+
+.market-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
 }

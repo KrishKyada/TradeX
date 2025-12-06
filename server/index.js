@@ -6,6 +6,7 @@ import cors from "cors";
 import portfolioRoutes from "./routes/portfolioRoutes.js";
 import priceRoutes from "./routes/priceRoutes.js";
 import chartRoutes from "./routes/chartRoutes.js";
+import marketRoutes from "./routes/marketRoutes.js";
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/prices", priceRoutes);
 app.use("/api/chart", chartRoutes);
-
+app.use("/api/market", marketRoutes);
 
 // Test route
 app.get("/", (req, res) => {

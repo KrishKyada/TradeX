@@ -7,23 +7,22 @@ const router = express.Router();
 router.get("/btc-24h", async (req, res) => {
   try {
     const url =
-      "https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=1";
+      "https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=24";
 
     const { data } = await axios.get(url);
 
-    // Extract hourly prices
-    // Coingecko gives data every few minutes, so we pick 24 evenly spaced points
-    const hourly = data.prices.filter((_, index) => index % 2 === 0).slice(0, 24);
-
-    const formatted = hourly.map((item, i) => ({
+    const formatted = data.map((item, i) => ({
       time: `Hour ${i + 1}`,
-      price: item[1],
+      price: parseFloat(item[4]), // closing price
     }));
 
     res.json(formatted);
-  } catch (err) {
-    res.status(500).json({ error: "BTC hourly chart fetch failed" });
+
+  } catch (error) {
+    console.error("BTC CHART ERROR:", error.message);
+    res.status(500).json({ error: "BTC chart fetch failed" });
   }
 });
+
 
 export default router;
