@@ -11,10 +11,11 @@ const Analytics = () => {
     profitLoss: 0,
     profitLossPercent: 0,
   });
+  const [performance, setPerformance] = useState([]);
   const [loading, setLoading] = useState(true);
 
   /* -----------------------------
-      STEP 2 — Batch crypto request
+      Batch Crypto Price Fetcher
   ------------------------------ */
   const fetchCryptoPrices = async (cryptoAssets) => {
     if (cryptoAssets.length === 0) return {};
@@ -25,7 +26,7 @@ const Analytics = () => {
       symbols,
     });
 
-    return res.data; // { BTC: 42000, ETH: 3200, SOL: 150 }
+    return res.data; // { BTC: 42000, ETH: 3200 }
   };
 
   useEffect(() => {
@@ -40,17 +41,18 @@ const Analytics = () => {
 
         setAssets(data);
 
-        // Separate crypto & stock assets
+        // Split asset types
         const cryptoAssets = data.filter((a) => a.type === "crypto");
         const stockAssets = data.filter((a) => a.type === "stock");
 
         let totalInvestment = 0;
         let totalCurrentValue = 0;
+        const perfArray = [];
 
-        // 2️⃣ Fetch crypto prices in ONE request
+        // 2️⃣ Fetch crypto prices — batch
         const cryptoPrices = await fetchCryptoPrices(cryptoAssets);
 
-        // 3️⃣ Fetch stock prices (Finnhub supports per-symbol)
+        // 3️⃣ Fetch stock prices — one-by-one
         const stockPrices = {};
         for (const asset of stockAssets) {
           try {
@@ -63,7 +65,7 @@ const Analytics = () => {
           }
         }
 
-        // 4️⃣ Calculate totals
+        // 4️⃣ Calculate everything
         for (const asset of data) {
           const invest = asset.quantity * asset.buyPrice;
           totalInvestment += invest;
@@ -73,8 +75,24 @@ const Analytics = () => {
               ? cryptoPrices[asset.symbol] || 0
               : stockPrices[asset.symbol] || 0;
 
-          totalCurrentValue += currentPrice * asset.quantity;
+          const currentValue = currentPrice * asset.quantity;
+          totalCurrentValue += currentValue;
+
+          const pl = currentValue - invest;
+          const plPercent = invest > 0 ? (pl / invest) * 100 : 0;
+
+          perfArray.push({
+            id: asset._id,
+            symbol: asset.symbol,
+            quantity: asset.quantity,
+            invest,
+            currentValue,
+            pl,
+            plPercent,
+          });
         }
+
+        setPerformance(perfArray);
 
         const profitLoss = totalCurrentValue - totalInvestment;
         const profitLossPercent =
@@ -98,11 +116,23 @@ const Analytics = () => {
 
   // Pie chart data
   const getPieChartData = () => {
-    return assets.map((asset) => ({
-      symbol: asset.symbol,
-      value: asset.quantity * asset.buyPrice,
-    }));
+    const grouped = {};
+
+    assets.forEach((a) => {
+      const value = a.quantity * a.buyPrice;
+
+      if (!grouped[a.symbol]) grouped[a.symbol] = 0;
+
+      grouped[a.symbol] += value; // merge duplicates
+    });
+
+    return Object.entries(grouped).map(([symbol, value]) => ({
+    symbol,
+    value: value < 1 ? 1 : value, // ensures small slices still visible
+  }));
+
   };
+
 
   if (loading) {
     return (
@@ -167,8 +197,127 @@ const Analytics = () => {
           </div>
         </div>
 
-        {/* Pie Chart */}
-        <AllocationPieChart data={getPieChartData()} />
+        {/* === PIE CHART (LEFT) + GAINERS / LOSERS (RIGHT) === */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1fr 1fr",
+            gap: "20px",
+            marginTop: "30px",
+            height: "450px",
+          }}
+        >
+          {/* LEFT — TALL PIE CHART */}
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              padding: "20px",
+              borderRadius: "15px",
+              border: "1px solid rgba(0, 212, 255, 0.15)",
+              height: "100%",
+              backdropFilter: "blur(12px)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <h2 style={{ marginBottom: "10px" }}>Asset Allocation</h2>
+            <AllocationPieChart data={getPieChartData()} />
+          </div>
+
+          {/* RIGHT SIDE — GAINERS & LOSERS STACKED */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            
+            {/* TOP GAINERS */}
+            <div
+              style={{
+                flex: 1,
+                background: "rgba(255, 255, 255, 0.05)",
+                padding: "20px",
+                borderRadius: "15px",
+                border: "1px solid rgba(0, 255, 140, 0.2)",
+                backdropFilter: "blur(12px)",
+                overflowY: "auto",
+              }}
+            >
+              <h2 style={{ color: "#00ff88", marginBottom: "10px" }}>Top Gainers</h2>
+
+              {performance
+                .filter((p) => p.plPercent > 0)
+                .sort((a, b) => b.plPercent - a.plPercent)
+                .slice(0, 5)
+                .map((asset) => (
+                  <div
+                    key={asset.id}
+                    style={{
+                      padding: "12px",
+                      marginBottom: "12px",
+                      borderRadius: "10px",
+                      background: "rgba(0, 255, 140, 0.1)",
+                      border: "1px solid rgba(0, 255, 140, 0.3)",
+                    }}
+                  >
+                    <h3 style={{ margin: "0 0 5px 0" }}>{asset.symbol}</h3>
+                    <p style={{ margin: 0, color: "#aaa" }}>{asset.quantity} units</p>
+                    <p
+                      style={{
+                        margin: "5px 0 0 0",
+                        fontWeight: "700",
+                        color: "#00ff88",
+                      }}
+                    >
+                      +{asset.plPercent.toFixed(2)}%
+                    </p>
+                  </div>
+                ))}
+            </div>
+
+            {/* TOP LOSERS */}
+            <div
+              style={{
+                flex: 1,
+                background: "rgba(255, 255, 255, 0.05)",
+                padding: "20px",
+                borderRadius: "15px",
+                border: "1px solid rgba(255, 80, 80, 0.2)",
+                backdropFilter: "blur(12px)",
+                overflowY: "auto",
+              }}
+            >
+              <h2 style={{ color: "#ff4d4d", marginBottom: "10px" }}>Top Losers</h2>
+
+              {performance
+                .filter((p) => p.plPercent < 0)
+                .sort((a, b) => a.plPercent - b.plPercent)
+                .slice(0, 5)
+                .map((asset) => (
+                  <div
+                    key={asset.id}
+                    style={{
+                      padding: "12px",
+                      marginBottom: "12px",
+                      borderRadius: "10px",
+                      background: "rgba(255, 80, 80, 0.1)",
+                      border: "1px solid rgba(255, 80, 80, 0.3)",
+                    }}
+                  >
+                    <h3 style={{ margin: "0 0 5px 0" }}>{asset.symbol}</h3>
+                    <p style={{ margin: 0, color: "#aaa" }}>{asset.quantity} units</p>
+                    <p
+                      style={{
+                        margin: "5px 0 0 0",
+                        fontWeight: "700",
+                        color: "#ff4d4d",
+                      }}
+                    >
+                      {asset.plPercent.toFixed(2)}%
+                    </p>
+                  </div>
+                ))}
+            </div>
+
+          </div>
+        </div>
       </div>
     </MainLayout>
   );

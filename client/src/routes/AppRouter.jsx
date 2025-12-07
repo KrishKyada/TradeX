@@ -4,6 +4,7 @@ import Register from "../pages/Register";
 import Dashboard from "../pages/Dashboard";
 import RequireAuth from "../components/RequireAuth";
 import Analytics from "../pages/Analytics";
+import Portfolio from "../pages/Portfolio";
 
 export default function AppRouter() {
   return (
@@ -13,6 +14,7 @@ export default function AppRouter() {
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={ <RequireAuth> <Dashboard /> </RequireAuth>} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/portfolio" element={<Portfolio />} />
       </Routes>
     </BrowserRouter>
   );

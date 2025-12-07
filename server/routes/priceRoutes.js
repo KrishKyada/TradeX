@@ -33,19 +33,25 @@ router.post("/crypto/batch", async (req, res) => {
   }
 });
 
-// GET Stock Price
+// GET Stock Price (Yahoo Finance - No API key needed)
 router.get("/stock/:symbol", async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
 
-    const response = await axios.get(
-      `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${process.env.FINNHUB_KEY}`
-    );
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d`;
 
-    res.json({ price: response.data.c });
+    const response = await axios.get(url);
+
+    const price =
+      response.data.chart.result[0].meta.regularMarketPrice ||
+      response.data.chart.result[0].meta.previousClose;
+
+    res.json({ price });
   } catch (error) {
+    console.error("YAHOO STOCK ERROR:", error.message);
     res.status(500).json({ error: "Failed to fetch stock price" });
   }
 });
+
 
 export default router;

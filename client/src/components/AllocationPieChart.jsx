@@ -15,6 +15,7 @@ export default function AllocationPieChart({ data }) {
           cx="50%"
           cy="50%"
           outerRadius={120}
+          minAngle={5}
           label
         >
           {data.map((entry, index) => (
