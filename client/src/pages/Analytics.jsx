@@ -221,7 +221,7 @@ const Analytics = () => {
               justifyContent: "center",
             }}
           >
-            <h2 style={{ marginBottom: "10px" }}>Asset Allocation</h2>
+            <h2 style={{ marginBottom: "-20px" }}></h2>
             <AllocationPieChart data={getPieChartData()} />
           </div>
 

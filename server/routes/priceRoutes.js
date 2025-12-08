@@ -37,21 +37,41 @@ router.post("/crypto/batch", async (req, res) => {
 router.get("/stock/:symbol", async (req, res) => {
   try {
     const symbol = req.params.symbol.toUpperCase();
-
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d`;
 
-    const response = await axios.get(url);
+    const { data } = await axios.get(url);
+
+    // Check if Yahoo returned valid data
+    if (
+      !data.chart ||
+      !data.chart.result ||
+      !data.chart.result[0] ||
+      !data.chart.result[0].meta
+    ) {
+      return res.status(400).json({
+        error: `Symbol '${symbol}' not found or not supported.`,
+      });
+    }
+
+    const meta = data.chart.result[0].meta;
 
     const price =
-      response.data.chart.result[0].meta.regularMarketPrice ||
-      response.data.chart.result[0].meta.previousClose;
+      meta.regularMarketPrice ?? meta.previousClose ?? null;
+
+    if (!price) {
+      return res.status(400).json({
+        error: `Could not fetch price for symbol '${symbol}'.`,
+      });
+    }
 
     res.json({ price });
+
   } catch (error) {
     console.error("YAHOO STOCK ERROR:", error.message);
     res.status(500).json({ error: "Failed to fetch stock price" });
   }
 });
+
 
 
 export default router;

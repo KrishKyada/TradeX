@@ -32,7 +32,9 @@ function MainLayout({ children }) {
 
           <Link to="#" className="menu-item">💳 Wallet</Link>
 
-          <Link to="#" className="menu-item">🧾 Invoice</Link>
+          <Link to="/market" className={`menu-item ${path === "/market" ? "active" : ""}`}>
+            🌍 Market
+          </Link>
 
           <Link
             to="/portfolio"
