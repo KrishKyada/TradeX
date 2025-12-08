@@ -10,6 +10,22 @@ function Portfolio() {
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  /* -------------------------------
+       Currency Helper
+  -------------------------------- */
+  const getCurrencySymbol = (symbol, type) => {
+    if (type === "crypto") return "$";
+
+    const nseList = ["RELIANCE", "TCS", "INFY", "HDFCBANK", "ITC", "SBIN", "HINDUNILVR", "BHARTIARTL", "KOTAKBANK" ,"ICICIBANK"];
+
+    if (nseList.includes(symbol.toUpperCase())) return "₹";
+
+    return "$"; // default for US stocks
+  };
+
+  /* -------------------------------
+       FETCH USER PORTFOLIO 
+  -------------------------------- */
   const fetchAssets = async () => {
     const token = localStorage.getItem("token");
     const res = await axios.get("http://localhost:5000/api/portfolio", {
@@ -18,44 +34,60 @@ function Portfolio() {
     setAssets(res.data);
   };
 
+  /* -------------------------------
+       FETCH CRYPTO PRICES
+  -------------------------------- */
   const fetchCryptoPrices = async () => {
     const crypto = assets.filter((a) => a.type === "crypto");
     if (crypto.length === 0) return;
 
-    const res = await axios.post(
-      "http://localhost:5000/api/prices/crypto/batch",
-      { symbols: crypto.map((a) => a.symbol) }
-    );
-
-    setPrices((prev) => ({ ...prev, ...res.data }));
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/prices/crypto/batch",
+        { symbols: crypto.map((a) => a.symbol) }
+      );
+      setPrices((prev) => ({ ...prev, ...res.data }));
+    } catch {
+      crypto.forEach((c) =>
+        setPrices((prev) => ({ ...prev, [c.symbol]: 0 }))
+      );
+    }
   };
 
+  /* -------------------------------
+       FETCH STOCK PRICES
+  -------------------------------- */
   const fetchStockPrices = async () => {
     const stocks = assets.filter((a) => a.type === "stock");
-    let stockLive = {};
+    let stockPrices = {};
 
     for (const stock of stocks) {
       try {
         const res = await axios.get(
           `http://localhost:5000/api/prices/stock/${stock.symbol}`
         );
-        stockLive[stock.symbol] = res.data.price;
+        stockPrices[stock.symbol] = res.data.price;
       } catch {
-        stockLive[stock.symbol] = 0;
+        stockPrices[stock.symbol] = 0;
       }
     }
 
-    setPrices((prev) => ({ ...prev, ...stockLive }));
+    setPrices((prev) => ({ ...prev, ...stockPrices }));
   };
 
+  /* -------------------------------
+       LOAD ASSETS INITIALLY
+  -------------------------------- */
   useEffect(() => {
     fetchAssets();
   }, []);
 
+  /* -------------------------------
+       REFRESH PRICES
+  -------------------------------- */
   useEffect(() => {
     if (assets.length === 0) return;
 
-    // initial fetch
     fetchCryptoPrices();
     fetchStockPrices();
     setLoading(false);
@@ -69,6 +101,9 @@ function Portfolio() {
     };
   }, [assets]);
 
+  /* -------------------------------
+       DELETE ASSET
+  -------------------------------- */
   const deleteAsset = async (id) => {
     const token = localStorage.getItem("token");
     await axios.delete(`http://localhost:5000/api/portfolio/${id}`, {
@@ -77,6 +112,9 @@ function Portfolio() {
     fetchAssets();
   };
 
+  /* -------------------------------
+       CALCULATIONS
+  -------------------------------- */
   let totalInvest = 0;
   let totalCurrent = 0;
 
@@ -94,25 +132,26 @@ function Portfolio() {
 
   const totalPL = totalCurrent - totalInvest;
 
-  const format = (n) =>
-    n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
+  const format = (n) => n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
-  if (loading)
+  if (loading) {
     return (
       <MainLayout>
         <h2 style={{ color: "white" }}>Loading Portfolio...</h2>
       </MainLayout>
     );
+  }
 
   return (
     <MainLayout>
       <h1>Portfolio</h1>
 
+      {/* STAT CARDS */}
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
-          gap: "18px",
+          gap: "20px",
         }}
       >
         <StatCard title="Investment" value={`₹${format(totalInvest)}`} />
@@ -121,14 +160,15 @@ function Portfolio() {
         <StatCard title="Holdings" value={assets.length} />
       </div>
 
+      {/* ADD BUTTON */}
       <button
         onClick={() => setShowModal(true)}
         style={{
+          marginTop: "20px",
           padding: "12px 18px",
           background: "#00d4ff",
           borderRadius: "8px",
           border: "none",
-          marginTop: "20px",
           cursor: "pointer",
           fontWeight: "600",
         }}
@@ -147,13 +187,13 @@ function Portfolio() {
         />
       )}
 
+      {/* PORTFOLIO TABLE */}
       <div
-        className="portfolio-scroll-inner"
         style={{
+          marginTop: "25px",
           background: "rgba(255,255,255,0.05)",
           padding: "20px",
-          borderRadius: "15px",
-          marginTop: "20px",
+          borderRadius: "12px",
         }}
       >
         <table style={{ width: "100%", color: "white" }}>
@@ -162,7 +202,7 @@ function Portfolio() {
               <th>Symbol</th>
               <th>Qty</th>
               <th>Buy Price</th>
-              <th>Current Price</th>
+              <th>Current</th>
               <th>Value</th>
               <th>P/L</th>
               <th></th>
@@ -173,18 +213,30 @@ function Portfolio() {
             {rows.map((r) => (
               <tr key={r._id}>
                 <td>{r.symbol}</td>
+
                 <td>{r.quantity}</td>
-                <td>{format(r.buyPrice)}</td>
-                <td>{format(r.curPrice)}</td>
-                <td>{format(r.curValue)}</td>
+
+                <td>
+                  {getCurrencySymbol(r.symbol, r.type)} {format(r.buyPrice)}
+                </td>
+
+                <td>
+                  {getCurrencySymbol(r.symbol, r.type)} {format(r.curPrice)}
+                </td>
+
+                <td>
+                  {getCurrencySymbol(r.symbol, r.type)} {format(r.curValue)}
+                </td>
+
                 <td
                   style={{
                     color: r.pl >= 0 ? "#00ff88" : "#ff4d4d",
                     fontWeight: "600",
                   }}
                 >
-                  {format(r.pl)}
+                  {getCurrencySymbol(r.symbol, r.type)} {format(r.pl)}
                 </td>
+
                 <td>
                   <button
                     onClick={() => deleteAsset(r._id)}

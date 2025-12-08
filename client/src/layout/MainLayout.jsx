@@ -30,7 +30,13 @@ function MainLayout({ children }) {
             📈 Analytics
           </Link>
 
-          <Link to="#" className="menu-item">💳 Wallet</Link>
+          <Link
+            to="/wallet"
+            className={`menu-item ${location.pathname === "/wallet" ? "active" : ""}`}
+          >
+            💳 Wallet
+          </Link>
+
 
           <Link to="/market" className={`menu-item ${path === "/market" ? "active" : ""}`}>
             🌍 Market

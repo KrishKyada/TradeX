@@ -7,6 +7,7 @@ import portfolioRoutes from "./routes/portfolioRoutes.js";
 import priceRoutes from "./routes/priceRoutes.js";
 import chartRoutes from "./routes/chartRoutes.js";
 import marketRoutes from "./routes/marketRoutes.js";
+import walletRoutes from "./routes/walletRoutes.js";
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ app.use("/api/portfolio", portfolioRoutes);
 app.use("/api/prices", priceRoutes);
 app.use("/api/chart", chartRoutes);
 app.use("/api/market", marketRoutes);
+app.use("/api/wallet", walletRoutes);
 
 // Test route
 app.get("/", (req, res) => {

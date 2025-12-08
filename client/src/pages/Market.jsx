@@ -1,14 +1,31 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import MainLayout from "../layout/MainLayout";
+import AddAssetModal from "../components/AddAssetModal";
 
 function Market() {
   const [crypto, setCrypto] = useState([]);
-  const [stocks, setStocks] = useState([]);
+  const [stocks, setStocks] = useState([]); // USA + NSE merged from backend
   const [search, setSearch] = useState("");
 
+  // Modal states
+  const [showModal, setShowModal] = useState(false);
+  const [selected, setSelected] = useState({
+    symbol: "",
+    type: "",
+    price: 0,
+  });
+
   /* -------------------------------
-     FETCH CRYPTO (Binance)
+     OPEN MODAL WITH PRE-FILLED DATA
+  -------------------------------- */
+  const openAddModal = (symbol, type, price) => {
+    setSelected({ symbol, type, price });
+    setShowModal(true);
+  };
+
+  /* -------------------------------
+     FETCH CRYPTO (BINANCE)
   -------------------------------- */
   const fetchCrypto = async () => {
     try {
@@ -20,12 +37,12 @@ function Market() {
   };
 
   /* -------------------------------
-     FETCH STOCKS (Yahoo Finance)
+     FETCH STOCKS (USA + NSE merged)
   -------------------------------- */
   const fetchStocks = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/market/stocks");
-      setStocks(res.data);
+      setStocks(res.data); // backend already includes NSE + NASDAQ
     } catch (err) {
       console.error("Stock fetch error:", err.message);
     }
@@ -35,17 +52,12 @@ function Market() {
      AUTO REFRESH LOGIC
   -------------------------------- */
   useEffect(() => {
-    // Load initially
     fetchCrypto();
     fetchStocks();
 
-    // Auto-refresh crypto every 5 seconds
     const cryptoInterval = setInterval(fetchCrypto, 5000);
-
-    // Auto-refresh stocks every 30 seconds
     const stockInterval = setInterval(fetchStocks, 30000);
 
-    // Cleanup on page leave
     return () => {
       clearInterval(cryptoInterval);
       clearInterval(stockInterval);
@@ -53,14 +65,22 @@ function Market() {
   }, []);
 
   /* -------------------------------
-     SEARCH FILTER
+     FILTERS
   -------------------------------- */
   const filteredCrypto = crypto.filter((c) =>
     c.symbol.toLowerCase().includes(search.toLowerCase())
   );
 
-  const filteredStocks = stocks.filter((s) =>
-    s.symbol.toLowerCase().includes(search.toLowerCase())
+  const filteredUSStocks = stocks.filter(
+    (s) =>
+      s.exchange === "NASDAQ" &&
+      s.symbol.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const filteredNSEStocks = stocks.filter(
+    (s) =>
+      s.exchange === "NSE" &&
+      s.symbol.toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -84,8 +104,8 @@ function Market() {
         }}
       />
 
-      {/* CRYPTO SECTION */}
-      <h2 style={{ marginTop: "20px" }}>🔥 Crypto Market</h2>
+      {/* ---------------------- CRYPTO MARKET ----------------------- */}
+      <h2 style={{ marginTop: "20px" }}>₿ Crypto Market</h2>
       <div
         style={{
           display: "grid",
@@ -108,9 +128,28 @@ function Market() {
               gap: "6px",
             }}
           >
-            <strong style={{ fontSize: "18px", color: "#00d4ff" }}>
-              {c.symbol}
-            </strong>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <strong style={{ fontSize: "18px", color: "#00d4ff" }}>
+                {c.symbol}
+              </strong>
+
+              <button
+                onClick={() => openAddModal(c.symbol, "crypto", c.price)}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "12px",
+                  borderRadius: "6px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: "#00d4ff",
+                  color: "black",
+                  fontWeight: "600",
+                }}
+              >
+                + Add
+              </button>
+            </div>
+
             <p style={{ margin: 0, fontSize: "15px" }}>
               ${c.price.toLocaleString()}
             </p>
@@ -118,8 +157,8 @@ function Market() {
         ))}
       </div>
 
-      {/* STOCKS SECTION */}
-      <h2 style={{ marginTop: "40px" }}>📈 Stock Market</h2>
+      {/* ---------------------- US STOCK MARKET ----------------------- */}
+      <h2 style={{ marginTop: "40px" }}>US Stock Market</h2>
       <div
         style={{
           display: "grid",
@@ -128,7 +167,7 @@ function Market() {
           marginTop: "10px",
         }}
       >
-        {filteredStocks.map((s) => (
+        {filteredUSStocks.map((s) => (
           <div
             key={s.symbol}
             style={{
@@ -137,20 +176,103 @@ function Market() {
               borderRadius: "12px",
               border: "1px solid rgba(0,212,255,0.15)",
               backdropFilter: "blur(10px)",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            <strong style={{ fontSize: "18px", color: "#00ff88" }}>
-              {s.symbol}
-            </strong>
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <strong style={{ fontSize: "18px", color: "#00ff88" }}>
+                {s.symbol}
+              </strong>
+
+              <button
+                onClick={() => openAddModal(s.symbol, "stock", s.price)}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "12px",
+                  borderRadius: "6px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: "#00ff88",
+                  color: "black",
+                  fontWeight: "600",
+                }}
+              >
+                + Add
+              </button>
+            </div>
+
             <p style={{ margin: 0, fontSize: "15px" }}>
               ${s.price.toLocaleString()}
             </p>
           </div>
         ))}
       </div>
+
+      {/* ---------------------- NSE STOCK MARKET ----------------------- */}
+      <h2 style={{ marginTop: "40px" }}>IN Stock Market</h2>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(4,1fr)",
+          gap: "20px",
+          marginTop: "10px",
+        }}
+      >
+        {filteredNSEStocks.map((s) => (
+          <div
+            key={s.symbol}
+            style={{
+              background: "rgba(255,255,255,0.05)",
+              padding: "15px",
+              borderRadius: "12px",
+              border: "1px solid rgba(0,212,255,0.15)",
+              backdropFilter: "blur(10px)",
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <strong style={{ fontSize: "18px", color: "#ffaa00" }}>
+                {s.symbol}
+              </strong>
+
+              <button
+                onClick={() => openAddModal(s.symbol, "stock", s.price)}
+                style={{
+                  padding: "4px 10px",
+                  fontSize: "12px",
+                  borderRadius: "6px",
+                  border: "none",
+                  cursor: "pointer",
+                  background: "#ffaa00",
+                  color: "black",
+                  fontWeight: "600",
+                }}
+              >
+                + Add
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: "15px" }}>
+              ₹{s.price.toLocaleString("en-IN")}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* ---------------------- ADD ASSET MODAL ----------------------- */}
+      {showModal && (
+        <AddAssetModal
+          presetSymbol={selected.symbol}
+          presetType={selected.type}
+          presetPrice={selected.price}
+          onClose={() => setShowModal(false)}
+          onAdded={() => {}}
+        />
+      )}
     </MainLayout>
   );
 }
 
 export default Market;
-    
