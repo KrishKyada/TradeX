@@ -128,7 +128,7 @@ export default function Login() {
                     id="password"
                     name="password"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="Enter Password"
                     value={form.password}
                     onChange={handleChange}
                     required

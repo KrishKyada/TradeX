@@ -15,10 +15,10 @@ export default function AppRouter() {
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={ <RequireAuth> <Dashboard /> </RequireAuth>} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/portfolio" element={<Portfolio />} />
-        <Route path="/market" element={<Market />} />
-        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/analytics" element={ <RequireAuth> <Analytics /> </RequireAuth>} />
+        <Route path="/portfolio" element={<RequireAuth> <Portfolio /> </RequireAuth>} />
+        <Route path="/market" element={<RequireAuth> <Market /> </RequireAuth>} />
+        <Route path="/wallet" element={<RequireAuth> <Wallet /> </RequireAuth>} />
       </Routes>
     </BrowserRouter>
   );
