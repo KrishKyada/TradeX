@@ -19,8 +19,17 @@ function MainLayout({ children }) {
     <div className="layout">
       <aside className="sidebar">
         <div className="logo">
-          <span style={{ fontSize: "24px", marginRight: "10px" }}>💼</span>
-          <strong>FinHub</strong>
+          <img
+            src="/Logo.png"
+            alt="TradeX"
+            style={{
+              height: "28px",
+              width: "28px",
+              marginRight: "10px",
+              objectFit: "contain",
+            }}
+          />
+          <strong>TradeX</strong>
         </div>
 
         <nav className="menu">
