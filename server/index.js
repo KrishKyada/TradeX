@@ -32,6 +32,11 @@ app.get("/", (req, res) => {
   res.send("Server is running!");
 });
 
+app.get("/health", (req, res) => {
+  res.status(200).send("OK");
+});
+
+
 connectDB();
 
 app.listen(5000, () => {
